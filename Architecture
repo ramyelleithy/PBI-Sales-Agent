@@ -16,7 +16,7 @@ The architecture is intentionally simple to allow fast deployment and rapid impr
 
 ## GitHub
 
-GitHub is the Brain of MAYA.
+GitHub is the Brain and Documentation Repository of MAYA.
 
 It contains:
 
@@ -61,6 +61,7 @@ Responsibilities:
 - Read Meta Referral information.
 - Detect the current project.
 - Load project knowledge from Google Drive.
+- Build the conversation context.
 - Send the proper context to OpenAI.
 - Retrieve requested files.
 - Send files back to the customer.
@@ -70,7 +71,7 @@ Responsibilities:
 
 ## OpenAI
 
-OpenAI is responsible only for conversation.
+OpenAI is the Conversation Engine of MAYA.
 
 Responsibilities:
 
@@ -103,6 +104,10 @@ Extract Referral
 ↓
 
 Load Project Files
+
+↓
+
+Build Context
 
 ↓
 
