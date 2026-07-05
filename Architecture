@@ -2,13 +2,13 @@
 
 ## Overview
 
-MAYA is an AI Sales Executive for Propify Brokerage Agency.
+MAYA is the AI Sales Executive of Propify Brokerage Agency.
 
-The goal of MAYA is to communicate with real estate leads through WhatsApp, qualify them, answer their questions, send official project files, handle objections, and help move them toward booking or purchasing.
+Its mission is to communicate with real estate leads through WhatsApp, qualify them, answer project questions, send official project files, handle objections, and move qualified leads toward booking or purchasing.
 
 This is Version 1 (MVP).
 
-The architecture is intentionally simple to allow fast deployment and rapid improvement.
+The architecture is intentionally simple to allow fast deployment, fast testing, and continuous improvement.
 
 ---
 
@@ -16,53 +16,70 @@ The architecture is intentionally simple to allow fast deployment and rapid impr
 
 ## GitHub
 
-GitHub is the Brain and Documentation Repository of MAYA.
+GitHub is the permanent knowledge repository of MAYA.
 
-It contains:
+It stores everything that defines how MAYA thinks and works.
+
+Examples:
 
 - MAYA System Prompt
 - Propify Sales Methodology
 - Architecture Documentation
-- AI Skills
+- AI Rules
 - Business Rules
 - Future Improvements
+- Changelog
 
-GitHub does NOT contain project marketing content.
+GitHub never stores project operational content such as brochures, price lists, images, or videos.
 
 ---
 
 ## Google Drive
 
-Google Drive is the Content Management System (CMS).
+Google Drive is MAYA's operational knowledge base.
 
-It contains:
+Each project has its own folder.
+
+Example:
+
+MAYA/
+└── Projects/
+    └── Mountain View iCity/
+        ├── Project_Bible.md
+        ├── Sales_Playbook.md
+        ├── Client_Files/
+        ├── Price List.xlsx
+        └── Unit Plans/
+
+Google Drive stores:
 
 - Project Bible
 - Sales Playbook
+- Price Lists
+- Payment Plans
 - Brochures
 - Master Plans
-- Payment Plans
-- Price Lists
 - Images
 - Videos
 - Unit Plans
+- Client Files
 
-Google Drive is the only source for project documents.
+Google Drive is the single source of truth for all project content.
 
 ---
 
 ## n8n
 
-n8n is the automation engine.
+n8n is the workflow and automation engine.
 
 Responsibilities:
 
 - Receive WhatsApp messages.
-- Read Meta Referral information.
-- Detect the current project.
-- Load project knowledge from Google Drive.
-- Build the conversation context.
-- Send the proper context to OpenAI.
+- Read Meta Click-to-WhatsApp referral.
+- Detect the entry project.
+- Load the required project files from Google Drive.
+- Build the context.
+- Call OpenAI.
 - Retrieve requested files.
 - Send files back to the customer.
 - Save conversation history.
@@ -71,23 +88,27 @@ Responsibilities:
 
 ## OpenAI
 
-OpenAI is the Conversation Engine of MAYA.
+OpenAI is the conversation engine.
 
 Responsibilities:
 
 - Understand customer messages.
 - Follow the MAYA System Prompt.
-- Use the Project Bible and Sales Playbook.
-- Generate professional responses.
-- Guide the customer through the sales conversation.
+- Use the Project Bible and Sales Playbook provided by n8n.
+- Generate natural sales conversations.
+- Qualify customers.
+- Handle objections.
+- Guide customers toward the next sales step.
 
-OpenAI is not the source of truth.
+OpenAI never becomes the source of truth.
+
+It only reasons over the context provided to it.
 
 ---
 
 # Runtime Flow
 
-WhatsApp Customer
+Customer
 
 ↓
 
@@ -103,7 +124,15 @@ Extract Referral
 
 ↓
 
-Load Project Files
+Identify Entry Project
+
+↓
+
+Load Project Bible
+
+↓
+
+Load Sales Playbook
 
 ↓
 
@@ -119,52 +148,80 @@ Generate Response
 
 ↓
 
+If customer requests a file
+
+↓
+
+Retrieve file from Google Drive
+
+↓
+
 Send WhatsApp Reply
+
+↓
+
+Save Conversation
 
 ---
 
 # Source of Truth
 
-Business Logic
+AI Rules
 
 → GitHub
 
-Project Content
+Project Knowledge
 
 → Google Drive
-
-Conversation
-
-→ OpenAI
 
 Automation
 
 → n8n
 
----
+Conversation
 
-# Version 1 Scope
-
-Version 1 supports:
-
-- One project at a time.
-- WhatsApp conversations.
-- Google Drive knowledge.
-- PDF and media delivery.
-- Sales qualification.
-- Objection handling.
-- Human handoff when required.
-
-Advanced recommendation engines, scoring systems, and additional AI components are intentionally postponed until after the MVP is running successfully.
+→ OpenAI
 
 ---
 
-# Design Philosophy
+# MVP Scope
 
-Keep the system simple.
+Version 1 includes:
 
-Ship fast.
+- WhatsApp conversations
+- Meta Click-to-WhatsApp
+- One project per conversation entry
+- Project Bible
+- Sales Playbook
+- Google Drive knowledge
+- Official file delivery
+- Customer qualification
+- Objection handling
+- Human handoff when required
+
+The following features are intentionally postponed:
+
+- Recommendation Engine
+- Planner
+- Scoring System
+- Sales State Engine
+- Multi-project intelligence
+- Advanced Memory
+- Analytics Engine
+
+---
+
+# Design Principles
+
+- Keep the architecture simple.
+- GitHub defines HOW MAYA works.
+- Google Drive contains WHAT MAYA knows.
+- n8n orchestrates the workflow.
+- OpenAI generates the conversation.
+- Add complexity only after the MVP proves itself.
+
+Ship first.
 
 Improve continuously.
 
-Every new feature must solve a real business problem before being added to the architecture.
+Never over-engineer before the business validates the need.
