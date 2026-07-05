@@ -1,0 +1,165 @@
+# MAYA Architecture
+
+## Overview
+
+MAYA is an AI Sales Executive for Propify Brokerage Agency.
+
+The goal of MAYA is to communicate with real estate leads through WhatsApp, qualify them, answer their questions, send official project files, handle objections, and help move them toward booking or purchasing.
+
+This is Version 1 (MVP).
+
+The architecture is intentionally simple to allow fast deployment and rapid improvement.
+
+---
+
+# Core Components
+
+## GitHub
+
+GitHub is the Brain of MAYA.
+
+It contains:
+
+- MAYA System Prompt
+- Propify Sales Methodology
+- Architecture Documentation
+- AI Skills
+- Business Rules
+- Future Improvements
+
+GitHub does NOT contain project marketing content.
+
+---
+
+## Google Drive
+
+Google Drive is the Content Management System (CMS).
+
+It contains:
+
+- Project Bible
+- Sales Playbook
+- Brochures
+- Master Plans
+- Payment Plans
+- Price Lists
+- Images
+- Videos
+- Unit Plans
+
+Google Drive is the only source for project documents.
+
+---
+
+## n8n
+
+n8n is the automation engine.
+
+Responsibilities:
+
+- Receive WhatsApp messages.
+- Read Meta Referral information.
+- Detect the current project.
+- Load project knowledge from Google Drive.
+- Send the proper context to OpenAI.
+- Retrieve requested files.
+- Send files back to the customer.
+- Save conversation history.
+
+---
+
+## OpenAI
+
+OpenAI is responsible only for conversation.
+
+Responsibilities:
+
+- Understand customer messages.
+- Follow the MAYA System Prompt.
+- Use the Project Bible and Sales Playbook.
+- Generate professional responses.
+- Guide the customer through the sales conversation.
+
+OpenAI is not the source of truth.
+
+---
+
+# Runtime Flow
+
+WhatsApp Customer
+
+↓
+
+Meta Click-to-WhatsApp
+
+↓
+
+n8n Webhook
+
+↓
+
+Extract Referral
+
+↓
+
+Load Project Files
+
+↓
+
+OpenAI
+
+↓
+
+Generate Response
+
+↓
+
+Send WhatsApp Reply
+
+---
+
+# Source of Truth
+
+Business Logic
+
+→ GitHub
+
+Project Content
+
+→ Google Drive
+
+Conversation
+
+→ OpenAI
+
+Automation
+
+→ n8n
+
+---
+
+# Version 1 Scope
+
+Version 1 supports:
+
+- One project at a time.
+- WhatsApp conversations.
+- Google Drive knowledge.
+- PDF and media delivery.
+- Sales qualification.
+- Objection handling.
+- Human handoff when required.
+
+Advanced recommendation engines, scoring systems, and additional AI components are intentionally postponed until after the MVP is running successfully.
+
+---
+
+# Design Philosophy
+
+Keep the system simple.
+
+Ship fast.
+
+Improve continuously.
+
+Every new feature must solve a real business problem before being added to the architecture.
