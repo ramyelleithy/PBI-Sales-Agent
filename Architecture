@@ -220,6 +220,39 @@ The following features are intentionally postponed:
 - OpenAI generates the conversation.
 - Add complexity only after the MVP proves itself.
 
+---
+
+## Naming Convention — Project Code
+
+كل إعلان (`Ad`) على `Meta` لازم يبدأ الـ (`headline`) بتاعه بكود مشروع ثابت بين قوسين مربعين، مثال:
+
+```
+[MV_ICITY] موانتن فيو أيسيتي - وحدات بإطلالة على البحيرة
+```
+
+**السبب:** الاعتماد على اسم الحملة (`Campaign Name`) أو الـ (`Ad ID` / `source_id`) غير موثوق، لأن مشروع واحد ممكن يبقى له عدة حملات وعدة (`Ad IDs`) بمرور الوقت. الـ (`Project Code`) ثابت ومتحكم فيه بالكامل من رامي وقت إنشاء أي إعلان جديد، مش (`Meta`) اللي بتولّده.
+
+**كيف يعمل داخل `n8n`:**
+
+```
+Inspect Referral (headline)
+    ↓
+Code node (regex: /^\[(.+?)\]/)
+    ↓
+Project_Mapping (Google Sheet: Project Code → Folder Name)
+    ↓
+Google Drive (فولدر المشروع)
+    ↓
+Project_Bible.md + Sales_Playbook.md
+    ↓
+OpenAI node context
+```
+
+**قاعدة صارمة:** أي إعلان جديد بدون `Project Code` في بداية الـ (`headline`) لا يمكن لـ `MAYA` تحديد المشروع الخاص به بشكل موثوق، ولازم يتصحح قبل التشغيل الفعلي.
+```
+
+بعد ما تحطه وتعمل (`commit`)، قولّي "تم" ونكمل على إنشاء الـ (`Google Sheet`) بتاع `Project_Mapping`.
+
 Ship first.
 
 Improve continuously.
