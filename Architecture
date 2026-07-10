@@ -1,26 +1,28 @@
 # MAYA Architecture
 
+Version: 1.1
+Owner: Propify Brokerage Agency
+Last updated: 2026-07-10
+
+---
+
 ## Overview
 
 MAYA is the AI Sales Executive of Propify Brokerage Agency.
 
 Its mission is to communicate with real estate leads through WhatsApp, qualify them, answer project questions, send official project files, handle objections, and move qualified leads toward booking or purchasing.
 
-This is Version 1 (MVP).
-
-The architecture is intentionally simple to allow fast deployment, fast testing, and continuous improvement.
+This is Version 1 (MVP). The architecture is intentionally simple to allow fast deployment, fast testing, and continuous improvement.
 
 ---
 
-# Core Components
+## Core Components
 
-## GitHub
+### GitHub
 
 GitHub is the permanent knowledge repository of MAYA.
 
-It stores everything that defines how MAYA thinks and works.
-
-Examples:
+It stores everything that defines how MAYA thinks and works:
 
 - MAYA System Prompt
 - Propify Sales Methodology
@@ -34,59 +36,59 @@ GitHub never stores project operational content such as brochures, price lists, 
 
 ---
 
-## Google Drive
+### Google Drive
 
 Google Drive is MAYA's operational knowledge base.
 
-Each project has its own folder.
+Root folder: **Propify Property Intelligence**
+(ID: 1h9bmeTizVD6tz--HcaNGEjaNAgQdWFsd)
 
-Example:
+Structure:
 
-MAYA/
-└── Projects/
-    └── Mountain View iCity/
-        ├── Project_Bible.md
-        ├── Sales_Playbook.md
-        ├── Client_Files/
-        ├── Price List.xlsx
-        └── Unit Plans/
+```
+Propify Property Intelligence/
+├── Projects/
+│   └── [Developer] - [Project Name]/
+│       ├── Project_Bible.md
+│       ├── Sales_Playbook.md
+│       └── Client_Files/
+├── Database/
+│   ├── Projects_Master  (Google Sheet — lightweight index of all market projects)
+│   └── Project_Mapping  (Google Sheet — Project Code → Folder ID)
+└── Raw_Data/
+    ├── WhatsApp/
+    └── Aqarmap/
+```
 
-Google Drive stores:
-
-- Project Bible
-- Sales Playbook
-- Price Lists
-- Payment Plans
-- Brochures
-- Master Plans
-- Images
-- Videos
-- Unit Plans
-- Client Files
+**Standard project folder rule (no exceptions):**
+Every project folder contains exactly:
+- `Project_Bible.md` — strategic knowledge, read-only by MAYA, never sent to client
+- `Sales_Playbook.md` — objection handling & qualification scripts, read-only, never sent to client
+- `Client_Files/` — files approved for sharing with clients only
 
 Google Drive is the single source of truth for all project content.
 
 ---
 
-## n8n
+### n8n
 
 n8n is the workflow and automation engine.
 
 Responsibilities:
 
 - Receive WhatsApp messages.
-- Read Meta Click-to-WhatsApp referral.
-- Detect the entry project.
+- Read Meta Click-to-WhatsApp referral (headline → Project Code).
+- Detect the Entry Project via Project_Mapping sheet.
 - Load the required project files from Google Drive.
-- Build the context.
+- Build the AI context.
 - Call OpenAI.
-- Retrieve requested files.
-- Send files back to the customer.
+- Retrieve requested client files.
+- Send WhatsApp reply.
 - Save conversation history.
 
 ---
 
-## OpenAI
+### OpenAI
 
 OpenAI is the conversation engine.
 
@@ -100,161 +102,124 @@ Responsibilities:
 - Handle objections.
 - Guide customers toward the next sales step.
 
-OpenAI never becomes the source of truth.
-
-It only reasons over the context provided to it.
+OpenAI never becomes the source of truth. It only reasons over the context provided to it.
 
 ---
 
-# Runtime Flow
+## Runtime Flow
 
+```
 Customer
-
-↓
-
+  ↓
 Meta Click-to-WhatsApp
-
-↓
-
+  ↓
 n8n Webhook
-
-↓
-
-Extract Referral
-
-↓
-
-Identify Entry Project
-
-↓
-
-Load Project Bible
-
-↓
-
-Load Sales Playbook
-
-↓
-
-Build Context
-
-↓
-
-OpenAI
-
-↓
-
+  ↓
+Extract Referral (headline)
+  ↓
+Regex: /^\[(.+?)\]/  →  Project Code
+  ↓
+Project_Mapping (Google Sheet: Code → Folder ID)
+  ↓
+Google Drive: load Project_Bible.md + Sales_Playbook.md
+  ↓
+Build Context → OpenAI
+  ↓
 Generate Response
-
-↓
-
-If customer requests a file
-
-↓
-
-Retrieve file from Google Drive
-
-↓
-
+  ↓
+[If client requests a file] → Retrieve from Client_Files/
+  ↓
 Send WhatsApp Reply
-
-↓
-
+  ↓
 Save Conversation
+```
 
 ---
 
-# Source of Truth
+## Three-Tier Knowledge Model
 
-AI Rules
+MAYA operates on three knowledge tiers during a conversation:
 
-→ GitHub
+| Tier | Trigger | Action |
+|---|---|---|
+| **1. Entry Project** | Ad Project Code from Meta referral | Full Project_Bible + Sales_Playbook loaded. Stay here unless proven unsuitable. |
+| **2. Pivot (Index)** | Customer asks about or hints at another project | Lightweight lookup in Projects_Master (name, developer, area, starting price only) |
+| **3. Deep Dive** | Customer confirms serious interest in alternate project | Full Project_Bible + Sales_Playbook loaded for the new project |
 
-Project Knowledge
-
-→ Google Drive
-
-Automation
-
-→ n8n
-
-Conversation
-
-→ OpenAI
+This model keeps responses fast and accurate while allowing MAYA to serve the full market, not just one project.
 
 ---
 
-# MVP Scope
+## Naming Convention — Project Code
 
-Version 1 includes:
+Every Meta Ad **headline** must begin with a fixed project code in square brackets:
 
-- WhatsApp conversations
-- Meta Click-to-WhatsApp
-- One project per conversation entry
-- Project Bible
-- Sales Playbook
-- Google Drive knowledge
-- Official file delivery
-- Customer qualification
-- Objection handling
+```
+[MV_ICITY] Mountain View iCity — Lake View Units
+[MRG-LUSAIL] Lusail Residence — Flexible Payment Plans
+```
+
+**Why:** Campaign names and Ad IDs are unreliable — one project may have many campaigns over time. The Project Code is fixed and controlled entirely by Ramy at ad creation, not generated by Meta.
+
+**How it works in n8n:**
+
+```
+Inspect Referral (headline)
+    ↓
+Code node: regex /^\[(.+?)\]/
+    ↓
+Project_Mapping (Google Sheet: Project Code → Folder ID)
+    ↓
+Google Drive (project folder)
+    ↓
+Project_Bible.md + Sales_Playbook.md
+    ↓
+OpenAI context
+```
+
+**Hard rule:** Any new ad without a Project Code in the headline cannot be reliably identified by MAYA and must be corrected before going live.
+
+---
+
+## Source of Truth
+
+| What | Where |
+|---|---|
+| How MAYA thinks | **GitHub** |
+| What MAYA knows (projects) | **Google Drive** |
+| Automation & workflows | **n8n** |
+| Conversation generation | **OpenAI** |
+
+---
+
+## MVP Scope
+
+**Version 1 includes:**
+
+- WhatsApp conversations via Meta Click-to-WhatsApp
+- Entry Project detection via Project Code
+- Project Bible + Sales Playbook knowledge
+- Google Drive file delivery (Client_Files only)
+- Customer qualification + objection handling
 - Human handoff when required
 
-The following features are intentionally postponed:
+**Intentionally postponed:**
 
 - Recommendation Engine
-- Planner
 - Scoring System
-- Sales State Engine
-- Multi-project intelligence
 - Advanced Memory
 - Analytics Engine
 
 ---
 
-# Design Principles
+## Design Principles
 
 - Keep the architecture simple.
 - GitHub defines HOW MAYA works.
 - Google Drive contains WHAT MAYA knows.
 - n8n orchestrates the workflow.
 - OpenAI generates the conversation.
+- No automatic updates to any file or sheet without human review first.
 - Add complexity only after the MVP proves itself.
 
----
-
-## Naming Convention — Project Code
-
-كل إعلان (`Ad`) على `Meta` لازم يبدأ الـ (`headline`) بتاعه بكود مشروع ثابت بين قوسين مربعين، مثال:
-
-```
-[MV_ICITY] موانتن فيو أيسيتي - وحدات بإطلالة على البحيرة
-```
-
-**السبب:** الاعتماد على اسم الحملة (`Campaign Name`) أو الـ (`Ad ID` / `source_id`) غير موثوق، لأن مشروع واحد ممكن يبقى له عدة حملات وعدة (`Ad IDs`) بمرور الوقت. الـ (`Project Code`) ثابت ومتحكم فيه بالكامل من رامي وقت إنشاء أي إعلان جديد، مش (`Meta`) اللي بتولّده.
-
-**كيف يعمل داخل `n8n`:**
-
-```
-Inspect Referral (headline)
-    ↓
-Code node (regex: /^\[(.+?)\]/)
-    ↓
-Project_Mapping (Google Sheet: Project Code → Folder Name)
-    ↓
-Google Drive (فولدر المشروع)
-    ↓
-Project_Bible.md + Sales_Playbook.md
-    ↓
-OpenAI node context
-```
-
-**قاعدة صارمة:** أي إعلان جديد بدون `Project Code` في بداية الـ (`headline`) لا يمكن لـ `MAYA` تحديد المشروع الخاص به بشكل موثوق، ولازم يتصحح قبل التشغيل الفعلي.
-```
-
-بعد ما تحطه وتعمل (`commit`)، قولّي "تم" ونكمل على إنشاء الـ (`Google Sheet`) بتاع `Project_Mapping`.
-
-Ship first.
-
-Improve continuously.
-
-Never over-engineer before the business validates the need.
+**Ship first. Improve continuously. Never over-engineer.**
