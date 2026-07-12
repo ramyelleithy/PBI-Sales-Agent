@@ -2,6 +2,44 @@
 
 ---
 
+## [1.1.0] — 2026-07-12
+
+### Infrastructure Migration: Phoenix Server
+
+**Server provisioning:**
+- Provisioned Phoenix Server (Contabo Cloud VPS, Ubuntu 24.04 LTS, 4 vCPU / 8GB RAM / 75GB NVMe, auto-backup enabled)
+- Hardened base OS: non-root sudo user (`propify`), SSH key-only auth (password login disabled), UFW firewall (22/80/443), Fail2Ban
+
+**Container platform:**
+- Installed Docker Engine + Docker Compose
+- Installed Portainer CE for visual container monitoring
+- Established `/opt/phoenix` folder structure: `compose/` (one subfolder per service), `data/` (bind-mounted service data), `backups/`, `logs/`, `scripts/`
+- Adopted architectural rules: one folder per service, no monolithic docker-compose files, every service ships with `.env` + `docker-compose.yml` + `README.md` from day one
+
+**n8n deployment:**
+- Deployed `n8n` + `PostgreSQL` via Docker Compose (replacing the default SQLite) under container names `phoenix-n8n` / `phoenix-postgres` on a dedicated `phoenix-net` Docker network
+- Configured `.env`-based secrets, bind-mounted volumes, `unless-stopped` restart policy, and health checks on both containers
+- n8n internal port bound to `127.0.0.1` only — never exposed directly to the internet
+- Registered `subdomain` `n8n.propify-egy.com`, configured Nginx as reverse proxy, and issued a Let's Encrypt/Certbot SSL certificate (auto-renewing)
+- Redis deliberately deferred — no current need for Queue Mode or multiple workers
+
+**Workflow migration (OpenHosst → Phoenix Server):**
+- Exported and re-imported the "MAYA - WhatsApp Sales Agent" `n8n` workflow unchanged
+- Re-created and re-linked all credentials on the new instance: Google Drive (new Service Account key), Google Sheets, OpenAI (new API key)
+- Updated the Meta WhatsApp Business API webhook Callback URL to `https://n8n.propify-egy.com/webhook/whatsapp-webhook` and re-verified successfully
+- Published the workflow and ran a full end-to-end test (pinned data + Execute workflow) — all nodes completed successfully with a correct, honest MAYA response
+
+**Documentation:**
+- Updated `Architecture` with a new "Infrastructure — Phoenix Server" section and the previously-undocumented "Naming Convention — Project Code" section
+
+### Pending (next versions)
+- Install Chatwoot (conversation monitoring + human takeover)
+- Install Netdata (resource monitoring; VPS upgrade decision to be based on 85%+ sustained RAM over two weeks, not a guess)
+- Resume the Three-Tier Knowledge Model work, paused during the server migration
+- Continue the knowledge base and data-tooling items carried over from 1.0.0 (see below)
+
+---
+
 ## [1.0.0] — 2026-07-10
 
 ### Initial Release (MVP)
