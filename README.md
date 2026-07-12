@@ -16,7 +16,7 @@ It does NOT store project operational content (brochures, price lists, images). 
 
 | File | Purpose |
 |---|---|
-| `Architecture` | Full system design, runtime flow, Three-Tier Knowledge Model, Project Code convention |
+| `Architecture` | Full system design, runtime flow, Phoenix Server infrastructure, Three-Tier Knowledge Model, Project Code convention |
 | `MAYA_System_Prompt` | MAYA's core instruction set fed to OpenAI at runtime |
 | `MAYA_AI_CONSTITUTION` | Complete sales skills, Arabic terminology, detailed behavior rules |
 | `PBA \| Propify Brain & AI` | MAYA's persona, tone, 5 operating rules, Micro-RAG setup (Arabic) |
@@ -32,8 +32,14 @@ It does NOT store project operational content (brochures, price lists, images). 
 |---|---|
 | How MAYA thinks | **This repo (GitHub)** |
 | What MAYA knows | **Google Drive** → `Propify Property Intelligence/Projects/` |
-| Workflow automation | **n8n** |
+| Workflow automation | **n8n**, self-hosted on **Phoenix Server** |
 | Conversation engine | **OpenAI** |
+
+---
+
+## Infrastructure
+
+n8n runs self-hosted on **Phoenix Server** — a dedicated VPS that is the shared foundation for MAYA and future Phoenix OS agents, not a single-purpose n8n box. See `Architecture` → "Infrastructure — Phoenix Server" for the full stack (Docker, PostgreSQL, Nginx + SSL, Portainer) and folder structure.
 
 ---
 
