@@ -155,12 +155,50 @@ n8n runs self-hosted on **Phoenix Server**, a dedicated VPS that is the shared f
 
 Upgrading the VPS tier is based on **measured data from Netdata** (e.g. sustained 85%+ RAM for two continuous weeks) — never a guess.
 
+### Implemented
+
+- **Chatwoot** (v4.14.0-ce) — conversation logging + human takeover. See **Phoenix Chat Layer** below.
+- **Netdata** — resource monitoring, installed via kickstart script. Port `19999` blocked by `ufw`; accessed only via SSH tunnel (`ssh -L 19999:localhost:19999 propify@169.58.3.233`, then `http://localhost:19999`). Feeds the scaling policy above.
+
 ### Deferred / not yet built
 
-- Chatwoot (conversation monitoring + human takeover)
-- Netdata (resource monitoring)
 - Open WebUI / Ollama (needs GPU, not a current priority)
 - Additional MCP servers
+
+---
+
+# Phoenix Chat Layer — Chatwoot Integration
+
+**Principle:** MAYA shouldn't know Chatwoot — Phoenix should know Chatwoot.
+
+Chatwoot is a **logging and monitoring layer only**, never an inbound processor. `n8n` remains the sole inbound gateway from Meta, which preserves `referral.headline` / Project Code data that would otherwise be lost. Each company (Propify, Canton Fashion, Afflou, Sheetify) gets its own separate Chatwoot Inbox.
+
+Integration logic lives in a reusable sub-workflow, **"Phoenix - Chatwoot Sync"**, kept separate from MAYA's own workflow:
+
+```
+Search/Create Contact
+    ↓
+Get Contact Conversations
+    ↓
+Filter Open Conversation (Code node: status=open, sort by updated_at DESC)
+    ↓
+If "Has Open Conversation?"
+    ├── true  → use existing conversation_id
+    └── false → Create New Conversation → extract id
+    ↓
+Merge Conversation ID
+    ↓
+Create Message
+```
+
+**Key lesson:** never rely on a POST failing as "search or create" logic unless the API actually enforces uniqueness. Chatwoot enforces unique phone numbers on Contacts, but does **not** prevent duplicate Conversations for the same contact + inbox — must explicitly search/filter first, then decide, then create.
+
+The `MAYA - WhatsApp Sales Agent` workflow calls this sub-workflow twice:
+
+- **Chatwoot Sync - Incoming** — after `Inspect Referral`
+- **Chatwoot Sync - Outgoing** — after `Send WhatsApp Reply`
+
+Both calls pass `company=propify_real_estate`, `agent=MAYA`, `channel=whatsapp` (currently hardcoded — TODO: move to the `phoenix_config` Postgres schema, which already holds normalized `companies` / `channels` / `agents` / `inboxes` tables). MAYA's workflow never references Chatwoot's `inbox_identifier` directly; that resolution happens inside the sub-workflow.
 
 ---
 
@@ -179,6 +217,10 @@ n8n Webhook
 ↓
 
 Extract Referral
+
+↓
+
+Chatwoot Sync - Incoming (Phoenix Chat Layer, logging only)
 
 ↓
 
@@ -215,6 +257,10 @@ Retrieve file from Google Drive
 ↓
 
 Send WhatsApp Reply
+
+↓
+
+Chatwoot Sync - Outgoing (Phoenix Chat Layer, logging only)
 
 ↓
 

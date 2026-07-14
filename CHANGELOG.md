@@ -2,6 +2,68 @@
 
 ---
 
+## [1.2.0] — 2026-07-14
+
+### WhatsApp Delivery — Root Cause & Fix
+
+Root cause was two `n8n` bugs — **not** a Meta account/permissions issue (App is Published, Business Verification Approved, webhook/`messages` subscription healthy):
+
+1. **"Send WhatsApp Reply" node** — JSON Body field was in `Fixed` mode instead of `Expression` mode.
+2. **"Prepare WhatsApp Payload" node** — the `whatsapp_payload` field was missing the `{{ }}` wrapper around `JSON.stringify()`, so it sent the raw literal code as text instead of an evaluated value.
+
+Both fixed. End-to-end delivery confirmed with multiple real messages received.
+
+**Standing lesson:** when MAYA sends a WhatsApp message and receives a valid `wamid` but the message never arrives, check `n8n` node modes (`Fixed` vs `Expression`) and expression wrappers first — assume Meta infrastructure is fine.
+
+### Chatwoot Integration — Phoenix Chat Layer (built & tested)
+
+Installed **Chatwoot v4.14.0-ce** (web + worker + Redis) on Phoenix Server, behind Nginx with SSL, as a **logging and monitoring layer only** — not an inbound processor. `n8n` remains the sole inbound gateway from Meta, preserving `referral.headline` / project code data.
+
+Built and tested end-to-end the **"Phoenix - Chatwoot Sync"** sub-workflow:
+
+```
+Search/Create Contact
+    ↓
+Get Contact Conversations
+    ↓
+Filter Open Conversation (Code node: status=open, sort by updated_at DESC)
+    ↓
+If "Has Open Conversation?"
+    ├── true  → use existing conversation_id
+    └── false → Create New Conversation → extract id
+    ↓
+Merge Conversation ID
+    ↓
+Create Message
+```
+
+**Key lesson:** never rely on a POST failing as the "search or create" business logic unless the API actually enforces uniqueness. Chatwoot enforces unique phone numbers on Contacts, but does **not** prevent duplicate Conversations for the same contact + inbox — must explicitly search/filter first, decide, then create.
+
+**Phoenix Chat Layer principle:** "MAYA shouldn't know Chatwoot — Phoenix should know Chatwoot." The `MAYA - WhatsApp Sales Agent` workflow calls the sub-workflow twice — `Chatwoot Sync - Incoming` (after `Inspect Referral`) and `Chatwoot Sync - Outgoing` (after `Send WhatsApp Reply`) — passing `company=propify_real_estate`, `agent=MAYA`, `channel=whatsapp` (currently hardcoded; TODO: move to the `phoenix_config` Postgres schema). This keeps Chatwoot-specific details (like `inbox_identifier`) out of MAYA's own workflow logic.
+
+Recurring `n8n` pitfall hit again here: HTTP Request node fields silently revert to `Fixed` mode instead of `Expression`, sending `{{ }}` expressions as literal text. Always verify the Fixed/Expression toggle when a node returns an unexpected literal-string error or a 404 referencing the raw expression text.
+
+### Netdata — Resource Monitoring (installed)
+
+Installed via the official kickstart script. Port `19999` is correctly blocked by the `ufw` firewall (not publicly accessible) — access is via SSH tunnel:
+
+```
+ssh -L 19999:localhost:19999 propify@169.58.3.233
+```
+then `http://localhost:19999`.
+
+Baseline readings: ~24% RAM, ~3% CPU — well below the 85%-sustained-for-two-weeks threshold that triggers VPS upgrade consideration.
+
+### Pending (next versions)
+- Submit Meta App Review for `whatsapp_business_messaging` Advanced Access (currently "Ready for testing" / Standard Access)
+- Claude ↔ `n8n` MCP connection (previously deferred; now prioritized over step-by-step Claude-in-Chrome operation)
+- Minor cleanup: remove the isolated, now-unused "Search or Create Conversation" / "Search Existing Conversation" nodes from the old `Phoenix - Chatwoot Sync` design
+- Resume the Three-Tier Knowledge Model implementation (paused during the Postgres migration)
+- Review `Project_Mapping` — several projects still unlinked; must be fixed before any new ad campaign targets a project not yet in the sheet
+- Continue Aqarmap scraper data expansion and the WhatsApp groups collector classification/approval workflow
+
+---
+
 ## [1.1.0] — 2026-07-12
 
 ### Infrastructure Migration: Phoenix Server
