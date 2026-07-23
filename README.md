@@ -1,5 +1,8 @@
 # PBI Sales Agent — MAYA
 
+> **⚠️ LEGACY — this repo is no longer the source of truth.**
+> All content here has been merged into **[`ramyelleithy/MAYA-Knowledge`](https://github.com/ramyelleithy/MAYA-Knowledge)** (`12_Implementation/Product_Skills/` and `12_Implementation/Infrastructure/`) as of 2026-07-23. That repo is now the single source of truth for how MAYA thinks and works — this one existing separately is what caused MAYA's sales-skill specs to go untracked and rediscovered mid-project. Do not edit files here going forward; edit the merged copies in `MAYA-Knowledge` instead. This repo is kept only for historical reference.
+
 **MAYA** is the AI Sales Executive of **Propify Brokerage Agency** (Egypt).
 
 She handles the complete customer journey on WhatsApp — from the first message to booking qualification — covering the entire Egyptian real estate market, not a single developer.
